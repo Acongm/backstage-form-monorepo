@@ -1,0 +1,27 @@
+{
+  "name": "app-spa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "antd": "^5.12.0",
+    "ui-components": "workspace:*"
+  },
+  "devDependencies": {
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.0",
+    "html-webpack-plugin": "^5.5.3",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.3.0",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "less-loader": "^11.1.0",
+    "less": "^4.2.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "backstage-form-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build:components": "yarn workspace ui-components build:umd",
+    "dev:spa": "yarn workspace app-spa dev",
+    "dev:docs": "yarn workspace docs-site storybook"
+  }
+}
