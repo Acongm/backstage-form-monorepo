@@ -8,6 +8,9 @@
 4. [文档站点搭建](#4-文档站点搭建)
 5. [代码规范配置](#5-代码规范配置)
 6. [Monorepo 管理工具配置](#6-monorepo-管理工具配置)
+7. [项目结构总览](#7-项目结构总览)
+8. [快速开始指南](#8-快速开始指南)
+9. [常见问题解答](#9-常见问题解答)
 
 ---
 
@@ -2096,4 +2099,778 @@ git commit -m "test: 测试提交规范"
 ---
 
 **第五步完成，请保存后继续下一步**
+
+## 6. Monorepo 管理工具配置
+
+本项目支持两种 Monorepo 管理工具：**Lerna** 和 **Nx**。你可以根据项目需求选择其中一种。
+
+---
+
+## 方案 A: 使用 Lerna
+
+### 6.1 安装 Lerna
+
+```bash
+yarn add -D -W lerna
+```
+
+### 6.2 初始化 Lerna
+
+```bash
+npx lerna init
+```
+
+这会创建 `lerna.json` 配置文件。
+
+### 6.3 配置 Lerna
+
+编辑 `lerna.json`：
+
+```json
+{
+  "version": "independent",
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "command": {
+    "publish": {
+      "conventionalCommits": true,
+      "message": "chore(release): publish",
+      "ignoreChanges": [
+        "*.md",
+        "*.test.ts",
+        "*.test.tsx",
+        ".eslintrc.js",
+        ".prettierrc"
+      ]
+    },
+    "version": {
+      "allowBranch": ["main", "master"],
+      "conventionalCommits": true
+    }
+  },
+  "packages": ["packages/*"]
+}
+```
+
+### 6.4 更新根目录 package.json
+
+添加 Lerna 相关脚本：
+
+```json
+{
+  "scripts": {
+    "lerna:version": "lerna version",
+    "lerna:publish": "lerna publish",
+    "lerna:bootstrap": "lerna bootstrap",
+    "lerna:clean": "lerna clean",
+    "lerna:changed": "lerna changed",
+    "lerna:diff": "lerna diff",
+    "lerna:exec": "lerna exec",
+    "lerna:run": "lerna run"
+  }
+}
+```
+
+### 6.5 Lerna 常用命令
+
+```bash
+# 查看变更的包
+yarn lerna:changed
+
+# 运行所有包的构建命令
+yarn lerna:run build
+
+# 在特定包中执行命令
+yarn lerna:exec --scope=ui-components -- yarn build
+
+# 版本管理（独立版本）
+yarn lerna:version
+
+# 发布包
+yarn lerna:publish
+```
+
+### 6.6 配置包之间的依赖
+
+在 `packages/app-spa/package.json` 中，依赖组件库：
+
+```json
+{
+  "dependencies": {
+    "ui-components": "workspace:*"
+  }
+}
+```
+
+Lerna 会自动处理 workspace 依赖。
+
+---
+
+## 方案 B: 使用 Nx
+
+### 6.1 安装 Nx
+
+```bash
+yarn add -D -W nx @nrwl/workspace
+```
+
+### 6.2 初始化 Nx
+
+```bash
+npx nx init
+```
+
+### 6.3 创建 nx.json
+
+创建 `nx.json`：
+
+```json
+{
+  "extends": "nx/presets/npm.json",
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "nx/tasks-runners/default",
+      "options": {
+        "cacheableOperations": ["build", "lint", "test"]
+      }
+    }
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
+    "lint": {
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.js"]
+    }
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/.eslintrc.js",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s"
+    ],
+    "sharedGlobals": []
+  }
+}
+```
+
+### 6.4 创建项目配置
+
+在根目录创建 `nx-workspace.json` 或使用 `project.json` 文件。
+
+为每个包创建 `project.json`：
+
+#### `packages/ui-components/project.json`
+
+```json
+{
+  "name": "ui-components",
+  "sourceRoot": "packages/ui-components/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn build",
+        "cwd": "packages/ui-components"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/ui-components/**/*.{ts,tsx}"]
+      }
+    }
+  },
+  "tags": ["type:lib"]
+}
+```
+
+#### `packages/app-spa/project.json`
+
+```json
+{
+  "name": "app-spa",
+  "sourceRoot": "packages/app-spa/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn dev",
+        "cwd": "packages/app-spa"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn build",
+        "cwd": "packages/app-spa"
+      },
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/app-spa/**/*.{ts,tsx}"]
+      }
+    }
+  },
+  "tags": ["type:app"]
+}
+```
+
+#### `packages/docs-site/project.json`
+
+```json
+{
+  "name": "docs-site",
+  "sourceRoot": "packages/docs-site/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn dev",
+        "cwd": "packages/docs-site"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn build",
+        "cwd": "packages/docs-site"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/docs-site/**/*.{ts,tsx}"]
+      }
+    }
+  },
+  "tags": ["type:app"]
+}
+```
+
+### 6.5 更新根目录 package.json
+
+添加 Nx 相关脚本：
+
+```json
+{
+  "scripts": {
+    "nx:graph": "nx graph",
+    "nx:affected": "nx affected",
+    "nx:run-many": "nx run-many",
+    "build:all": "nx run-many --target=build --all",
+    "lint:all": "nx run-many --target=lint --all",
+    "test:all": "nx run-many --target=test --all"
+  }
+}
+```
+
+### 6.6 Nx 常用命令
+
+```bash
+# 查看项目依赖图
+yarn nx:graph
+
+# 运行受影响的项目
+yarn nx:affected --target=build
+
+# 运行所有项目的构建
+yarn build:all
+
+# 运行特定项目的命令
+nx build ui-components
+nx dev app-spa
+
+# 查看项目信息
+nx show project ui-components
+```
+
+### 6.7 配置 Nx 缓存
+
+Nx 会自动缓存构建结果，提高构建速度。缓存存储在 `.nx/cache` 目录。
+
+---
+
+## 方案对比
+
+### Lerna 优势
+- ✅ 简单易用，配置少
+- ✅ 专注于版本管理和发布
+- ✅ 与 npm/yarn workspaces 集成良好
+- ✅ 适合简单的 monorepo 场景
+
+### Nx 优势
+- ✅ 强大的任务调度和缓存机制
+- ✅ 依赖图可视化
+- ✅ 只构建受影响的项目（affected）
+- ✅ 支持更复杂的构建管道
+- ✅ 更好的开发体验
+
+### 推荐选择
+
+- **小型项目或简单场景**：选择 **Lerna**
+- **大型项目或需要复杂构建**：选择 **Nx**
+
+---
+
+## 6.8 统一脚本配置（推荐）
+
+无论使用哪种工具，都可以在根目录 `package.json` 中统一管理脚本：
+
+```json
+{
+  "scripts": {
+    "build": "yarn workspace ui-components build",
+    "build:all": "yarn workspaces run build",
+    "dev:spa": "yarn workspace app-spa dev",
+    "dev:docs": "yarn workspace docs-site dev",
+    "clean": "yarn workspaces run clean",
+    "lint": "yarn workspaces run lint",
+    "lint:fix": "yarn workspaces run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  }
+}
+```
+
+### 6.9 各包添加统一脚本
+
+在每个包的 `package.json` 中添加：
+
+```json
+{
+  "scripts": {
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  }
+}
+```
+
+---
+
+**第六步完成，文档创建完毕！**
+
+## 总结
+
+完成以上所有步骤后，你将拥有一个完整的 Monorepo 项目，包含：
+
+1. ✅ **组件库**：支持 UMD 和 ESM 格式，独立打包
+2. ✅ **SPA 调试环境**：支持 UMD 和 ESM 两种加载方式测试
+3. ✅ **文档站点**：自动从 TypeScript 类型生成文档
+4. ✅ **代码规范**：ESLint + Prettier + Husky + Commitlint
+5. ✅ **Monorepo 管理**：Lerna 或 Nx 管理多包项目
+
+## 下一步
+
+1. 按照文档逐步执行每个步骤
+2. 根据实际需求调整配置
+3. 开始开发你的组件库！
+
+祝开发顺利！🎉
+
+---
+
+## 7. 项目结构总览
+
+### 7.1 完整目录结构
+
+```
+backstage-form-monorepo/
+├── packages/
+│   ├── ui-components/          # 组件库
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   │   ├── UserProfileForm/
+│   │   │   │   │   ├── index.ts              # 统一导出
+│   │   │   │   │   ├── pages/
+│   │   │   │   │   │   └── index.tsx          # 表单主逻辑
+│   │   │   │   │   ├── config/
+│   │   │   │   │   │   └── index.ts           # 组件元信息
+│   │   │   │   │   ├── i18n/
+│   │   │   │   │   │   ├── index.ts           # 多语言入口
+│   │   │   │   │   │   ├── zh.ts              # 中文
+│   │   │   │   │   │   └── en.ts              # 英文
+│   │   │   │   │   ├── data/
+│   │   │   │   │   │   └── index.ts           # 静态数据
+│   │   │   │   │   ├── utils/
+│   │   │   │   │   │   └── index.ts           # 工具函数
+│   │   │   │   │   ├── README.md              # 产品文档
+│   │   │   │   │   └── CODE_TEMPLATE.md       # 代码范式
+│   │   │   │   └── ...                        # 其他组件
+│   │   │   └── index.ts                       # 组件库统一导出
+│   │   ├── dist/                              # 构建产物
+│   │   │   ├── UserProfileForm.umd.js         # UMD 格式
+│   │   │   ├── UserProfileForm.esm.js         # ESM 格式
+│   │   │   └── ...
+│   │   ├── webpack.config.ts                  # Webpack 配置
+│   │   ├── tsconfig.json                      # TypeScript 配置
+│   │   └── package.json
+│   │
+│   ├── app-spa/                               # SPA 调试环境
+│   │   ├── src/
+│   │   │   ├── index.tsx                      # 入口文件
+│   │   │   ├── App.tsx                        # 主应用
+│   │   │   └── config/
+│   │   │       └── component.ts               # 组件配置
+│   │   ├── public/
+│   │   │   ├── index.html                     # 主页面
+│   │   │   ├── umd.html                       # UMD 测试页
+│   │   │   └── esm.html                       # ESM 测试页
+│   │   ├── webpack.config.ts
+│   │   ├── tsconfig.json
+│   │   └── package.json
+│   │
+│   └── docs-site/                             # 文档站点
+│       ├── src/
+│       │   └── stories/                       # Storybook Stories
+│       ├── scripts/
+│       │   ├── generate-docs.js               # 文档生成脚本
+│       │   └── generate-stories.js            # Stories 生成脚本
+│       ├── docs/                               # 生成的文档
+│       ├── .storybook/                         # Storybook 配置
+│       └── package.json
+│
+├── .husky/                                    # Git Hooks
+│   ├── pre-commit
+│   └── commit-msg
+│
+├── .vscode/                                    # VS Code 配置
+│   ├── settings.json
+│   └── extensions.json
+│
+├── .eslintrc.js                               # ESLint 配置
+├── .prettierrc                                # Prettier 配置
+├── .editorconfig                              # EditorConfig
+├── commitlint.config.js                       # Commitlint 配置
+├── tsconfig.json                              # 根 TypeScript 配置
+├── lerna.json                                 # Lerna 配置（可选）
+├── nx.json                                    # Nx 配置（可选）
+└── package.json                               # 根 package.json
+```
+
+### 7.2 关键文件说明
+
+| 文件/目录 | 说明 |
+|----------|------|
+| `packages/ui-components/` | 组件库源码，每个组件独立打包 |
+| `packages/ui-components/dist/` | 构建产物，包含 UMD 和 ESM 格式 |
+| `packages/app-spa/public/umd.html` | UMD 格式组件测试页面 |
+| `packages/app-spa/public/esm.html` | ESM 格式组件测试页面 |
+| `packages/docs-site/docs/` | 自动生成的 Markdown 文档 |
+| `.husky/` | Git Hooks 配置目录 |
+| `lerna.json` / `nx.json` | Monorepo 管理工具配置 |
+
+---
+
+## 8. 快速开始指南
+
+### 8.1 环境要求
+
+- Node.js >= 16.x
+- Yarn >= 1.22.x 或 npm >= 8.x
+- Git
+
+### 8.2 初始化项目（快速版）
+
+```bash
+# 1. 创建项目目录
+mkdir backstage-form-monorepo && cd backstage-form-monorepo
+
+# 2. 初始化 Git
+git init
+
+# 3. 初始化 package.json
+npm init -y
+
+# 4. 安装 Yarn（如果未安装）
+npm install -g yarn
+
+# 5. 按照文档步骤 1-6 逐步执行
+```
+
+### 8.3 开发工作流
+
+#### 创建新组件
+
+```bash
+# 1. 在 packages/ui-components/src/components/ 下创建组件目录
+mkdir -p packages/ui-components/src/components/NewForm/{pages,config,i18n,data,utils}
+
+# 2. 按照组件结构模板创建文件
+# 3. 在 packages/ui-components/src/index.ts 中导出
+# 4. 构建组件
+yarn build:components
+
+# 5. 在 SPA 中测试
+yarn dev:spa
+```
+
+#### 开发调试流程
+
+```bash
+# 1. 启动组件库构建（watch 模式，如果配置了）
+yarn workspace ui-components build:watch
+
+# 2. 启动 SPA 调试环境
+yarn dev:spa
+
+# 3. 访问 http://localhost:3000/umd.html 或 /esm.html
+# 4. 通过下拉选择器或 URL 参数切换组件测试
+```
+
+#### 文档更新流程
+
+```bash
+# 1. 更新组件代码和类型定义
+# 2. 生成文档
+cd packages/docs-site
+yarn generate:docs
+
+# 3. 生成 Stories
+yarn generate:stories
+
+# 4. 启动 Storybook
+yarn dev
+```
+
+### 8.4 常用命令速查
+
+```bash
+# 构建
+yarn build:components          # 构建组件库
+yarn build:all                 # 构建所有包
+
+# 开发
+yarn dev:spa                   # 启动 SPA 调试环境
+yarn dev:docs                  # 启动文档站点
+
+# 代码规范
+yarn lint                      # 检查代码
+yarn lint:fix                  # 自动修复
+yarn format                    # 格式化代码
+yarn format:check              # 检查格式
+
+# 清理
+yarn clean                     # 清理所有构建产物
+```
+
+### 8.5 提交代码流程
+
+```bash
+# 1. 添加文件
+git add .
+
+# 2. 提交（会自动触发 lint-staged 和 commitlint）
+git commit -m "feat(ui-components): 添加新组件"
+
+# 3. 推送
+git push
+```
+
+---
+
+## 9. 常见问题解答
+
+### 9.1 构建问题
+
+**Q: 构建时提示找不到模块？**
+
+A: 检查以下几点：
+1. 确保已运行 `yarn install` 安装所有依赖
+2. 检查 `tsconfig.json` 中的路径配置
+3. 确认组件导出路径正确
+
+**Q: UMD 格式构建后无法在浏览器中使用？**
+
+A: 确保：
+1. 已正确配置 `externals`，React 和 Antd 不被打包
+2. 在 HTML 中正确引入了 React、ReactDOM 和 Antd
+3. 检查 webpack 的 `library` 配置
+
+### 9.2 依赖问题
+
+**Q: 如何添加新的依赖到组件库？**
+
+A: 
+```bash
+# 添加到 peerDependencies（如果组件需要）
+yarn workspace ui-components add -P package-name
+
+# 添加到 devDependencies（开发工具）
+yarn workspace ui-components add -D package-name
+```
+
+**Q: 包之间如何相互引用？**
+
+A: 使用 `workspace:*` 协议：
+```json
+{
+  "dependencies": {
+    "ui-components": "workspace:*"
+  }
+}
+```
+
+### 9.3 开发环境问题
+
+**Q: SPA 中无法加载组件？**
+
+A: 检查：
+1. 组件是否已构建（`yarn build:components`）
+2. 组件路径配置是否正确
+3. 浏览器控制台是否有错误信息
+
+**Q: 如何快速切换测试的组件？**
+
+A: 两种方式：
+1. 在页面下拉选择器中选择
+2. 通过 URL 参数：`?component=ComponentName`
+
+### 9.4 代码规范问题
+
+**Q: 提交时被 Husky 拦截？**
+
+A: 
+1. 检查 ESLint 错误：`yarn lint:fix`
+2. 检查代码格式：`yarn format`
+3. 检查提交信息格式是否符合规范
+
+**Q: 如何跳过 Git Hooks？**
+
+A: （不推荐，仅紧急情况）
+```bash
+git commit --no-verify -m "message"
+```
+
+### 9.5 文档问题
+
+**Q: 文档生成失败？**
+
+A: 
+1. 确保组件有正确的 TypeScript 类型定义
+2. 检查 `react-docgen-typescript` 是否正确安装
+3. 查看脚本错误信息，检查组件路径
+
+**Q: Storybook 无法启动？**
+
+A: 
+1. 检查 Node.js 版本是否符合要求
+2. 删除 `node_modules` 和 `yarn.lock`，重新安装
+3. 检查 `.storybook` 配置是否正确
+
+### 9.6 Monorepo 管理问题
+
+**Q: Lerna 和 Nx 可以同时使用吗？**
+
+A: 不推荐，选择其中一种即可。如果项目已经使用 Yarn Workspaces，Lerna 更简单。
+
+**Q: 如何发布组件库？**
+
+A: 
+```bash
+# 使用 Lerna
+yarn lerna:publish
+
+# 或手动发布
+cd packages/ui-components
+npm publish
+```
+
+### 9.7 性能优化
+
+**Q: 构建速度慢怎么办？**
+
+A: 
+1. 使用 Nx 的缓存功能
+2. 只构建变更的组件
+3. 使用 webpack 的缓存配置
+4. 考虑使用 esbuild 替代 ts-loader
+
+**Q: 如何减少打包体积？**
+
+A: 
+1. 确保 React 和 Antd 配置为 external
+2. 使用 Tree Shaking
+3. 按需引入 Antd 组件
+4. 压缩构建产物
+
+### 9.8 最佳实践建议
+
+1. **组件开发**：
+   - 每个组件保持独立，不相互依赖
+   - 使用 TypeScript 严格模式
+   - 编写清晰的 Props 类型定义
+
+2. **代码组织**：
+   - 遵循既定的目录结构
+   - 保持代码风格一致
+   - 及时更新文档
+
+3. **版本管理**：
+   - 使用语义化版本
+   - 遵循提交信息规范
+   - 及时打 Tag
+
+4. **测试**：
+   - 在 SPA 中充分测试组件
+   - 测试 UMD 和 ESM 两种格式
+   - 测试不同浏览器兼容性
+
+---
+
+## 附录
+
+### A. 组件开发模板
+
+创建新组件时，可以参考以下模板快速开始：
+
+```bash
+# 组件目录结构
+ComponentName/
+├── index.ts              # export { default } from './pages';
+├── pages/index.tsx       # 组件主逻辑
+├── config/index.ts       # 组件配置
+├── i18n/
+│   ├── index.ts
+│   ├── zh.ts
+│   └── en.ts
+├── data/index.ts
+├── utils/index.ts
+├── README.md
+└── CODE_TEMPLATE.md
+```
+
+### B. 相关资源
+
+- [React 官方文档](https://react.dev/)
+- [Ant Design 文档](https://ant.design/)
+- [TypeScript 文档](https://www.typescriptlang.org/)
+- [Webpack 文档](https://webpack.js.org/)
+- [Lerna 文档](https://lerna.js.org/)
+- [Nx 文档](https://nx.dev/)
+- [Storybook 文档](https://storybook.js.org/)
+
+### C. 技术支持
+
+如遇到问题，可以：
+1. 查看项目 Issues
+2. 查阅相关工具文档
+3. 检查控制台错误信息
+4. 使用调试工具排查
+
+---
+
+**文档完！祝开发顺利！** 🚀
 
