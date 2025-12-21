@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[566],{9566(n){n.exports="# 代码范式\r\n\r\n## Props 接口定义\r\n\r\n```typescript\r\ninterface ComponentProps {\r\n  onSubmit?: (values: any) => void;\r\n  locale?: 'zh' | 'en';\r\n}\r\n```\r\n\r\n## 使用示例\r\n\r\n```tsx\r\n<UserProfileForm onSubmit={handleSubmit} locale=\"zh\" />\r\n```"}}]);

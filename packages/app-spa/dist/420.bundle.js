@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[420],{2420(e,a,p){p.d(a,{default:()=>s});const s={title:"User Profile",name:"Name",email:"Email"}}}]);

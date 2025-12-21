@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[494],{6494(r){r.exports="# UserProfileForm 用户资料表单\r\n\r\n## 字段说明\r\n\r\n- name: 用户姓名（必填）\r\n- email: 用户邮箱（可选）\r\n\r\n## 业务规则\r\n\r\n1. 姓名不能为空\r\n2. 邮箱格式需要验证"}}]);

@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[481],{6481(e,s,p){p.d(s,{default:()=>r});const r={userProfileForm:{title:"User Profile Form",description:"This is a user profile form"}}}}]);

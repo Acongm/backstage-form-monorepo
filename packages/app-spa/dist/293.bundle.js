@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[293],{1293(a,e,p){p.d(e,{default:()=>s});const s={title:"用户资料",name:"姓名",email:"邮箱"}}}]);

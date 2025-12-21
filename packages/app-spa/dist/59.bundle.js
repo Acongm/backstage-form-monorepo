@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[59,293,420],{59(e,a,t){t.d(a,{default:()=>p});var l=t(1293),s=t(2420);const p={zh:l.default,en:s.default}},1293(e,a,t){t.d(a,{default:()=>l});const l={title:"用户资料",name:"姓名",email:"邮箱"}},2420(e,a,t){t.d(a,{default:()=>l});const l={title:"User Profile",name:"Name",email:"Email"}}}]);

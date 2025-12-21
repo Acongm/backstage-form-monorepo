@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkapp_spa=self.webpackChunkapp_spa||[]).push([[916],{3916(e,p,s){s.d(p,{default:()=>a});const a={userProfileForm:{title:"用户表单",description:"这是一个用户表单"}}}}]);

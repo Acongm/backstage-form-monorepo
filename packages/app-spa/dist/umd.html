@@ -1,0 +1,151 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UMD 组件测试</title><script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script><script src="https://unpkg.com/antd@5.29.3/dist/antd.min.js"></script><link rel="stylesheet" href="https://unpkg.com/antd@5.29.3/dist/reset.css"><script>if (typeof React === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"><\/script>');
+    }
+    if (typeof ReactDOM === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"><\/script>');
+    }
+    if (typeof antd === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/antd@5.29.3/dist/antd.min.js"><\/script>');
+      document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@5.29.3/dist/reset.css">');
+    }</script><script>// 检查依赖是否正确加载
+    if (typeof React === 'undefined') {
+      console.error('React failed to load');
+    } else {
+      console.log('React loaded successfully');
+    }
+    
+    if (typeof ReactDOM === 'undefined') {
+      console.error('ReactDOM failed to load');
+    } else {
+      console.log('ReactDOM loaded successfully');
+    }
+    
+    if (typeof antd === 'undefined') {
+      console.error('Antd failed to load');
+    } else {
+      console.log('Antd loaded successfully');
+      // 检查 antd 中是否包含 Form
+      if (typeof antd.Form === 'undefined') {
+        console.error('Antd.Form is undefined. Available keys:', Object.keys(antd));
+      } else {
+        console.log('Antd.Form is available');
+      }
+    }</script><style>body {
+      margin: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .component-selector {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+    .component-selector select {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+    .component-selector button {
+      padding: 8px 16px;
+      background: #1890ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #root {
+      max-width: 600px;
+      margin: 0 auto;
+    }</style></head><body><div class="component-selector"><label>选择组件：</label> <select id="componentSelect"><option value="UserProfileForm">UserProfileForm</option></select> <button onclick="loadComponent()">加载组件</button> <button onclick="switchToESM()">切换到 ESM 模式</button></div><div id="root"></div><script>// 组件配置
+    const COMPONENTS = {
+      UserProfileForm: {
+        umdPath: '/dist/UserProfileForm.umd.js',
+        // 添加更多组件...
+      }
+    };
+
+    // 从 URL 参数获取组件名
+    function getComponentName() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('component') || 'UserProfileForm';
+    }
+
+    // 加载组件
+    function loadComponent() {
+      const componentName = document.getElementById('componentSelect').value;
+      const componentConfig = COMPONENTS[componentName];
+      
+      if (!componentConfig) {
+        console.error('组件不存在:', componentName);
+        return;
+      }
+
+      // 移除旧的脚本
+      const oldScript = document.getElementById('component-script');
+      if (oldScript) {
+        oldScript.remove();
+      }
+
+      // 加载新的组件脚本
+      const script = document.createElement('script');
+      script.id = 'component-script';
+      script.src = componentConfig.umdPath;
+      script.onload = () => {
+        // 组件加载完成后渲染
+        renderComponent(componentName);
+        // 更新 URL
+        window.history.pushState({}, '', `?component=${componentName}`);
+      };
+      script.onerror = () => {
+        console.error('组件加载失败:', componentConfig.umdPath);
+      };
+      document.body.appendChild(script);
+    }
+
+    // 渲染组件
+    function renderComponent(componentName) {
+      const root = document.getElementById('root');
+      root.innerHTML = '';
+
+      // 获取组件（根据 webpack 配置的 library 名称）
+      const ComponentLibrary = window[componentName + 'FormPlugin'];
+      
+      if (!ComponentLibrary) {
+        console.error('组件未找到:', componentName);
+        return;
+      }
+
+      const Component = ComponentLibrary.default || ComponentLibrary;
+      
+      // 使用 React 渲染
+      const container = document.createElement('div');
+      root.appendChild(container);
+      
+      ReactDOM.render(
+        React.createElement(Component, {
+          onSubmit: (values) => {
+            console.log('表单提交:', values);
+            alert('表单数据: ' + JSON.stringify(values, null, 2));
+          },
+          locale: 'zh'
+        }),
+        container
+      );
+    }
+
+    // 切换到 ESM 模式
+    function switchToESM() {
+      window.location.href = '/esm.html' + window.location.search;
+    }
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      const componentName = getComponentName();
+      document.getElementById('componentSelect').value = componentName;
+      loadComponent();
+    });
+
+    // 监听选择器变化
+    document.getElementById('componentSelect').addEventListener('change', loadComponent);</script></body></html>

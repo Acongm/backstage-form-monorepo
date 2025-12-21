@@ -1,11 +1,25 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true
+    "baseUrl": ".",
+    "paths": {
+      "@arvin/ui-components": [
+        "../ui-components/src"
+      ],
+      "@arvin/ui-components/*": [
+        "../ui-components/src/*"
+      ]
+    },
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noEmit": false
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src",
+    "../ui-components/src" // 确保 TS 能索引这些文件
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

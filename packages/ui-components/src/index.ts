@@ -1,2 +1,2 @@
-export { default as UserProfileFormPage } from './components/UserProfileForm/pages';
-export { default as DemoPage } from './components/demo/pages';
+export { default as UserProfileForm } from './components/UserProfileForm';
+export { default as DemoPage } from './components/DemoPage/pages';

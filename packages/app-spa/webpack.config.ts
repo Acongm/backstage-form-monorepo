@@ -1,47 +1,95 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import path from 'path';
+import { fileURLToPath } from 'url';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import type { Configuration } from 'webpack';
+import type { Configuration as DevServerConfiguration } from 'webpack-dev-server';
 
-module.exports = {
-  entry: './src/index.tsx',
-  devtool: 'inline-source-map',
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const config: Configuration & { devServer?: DevServerConfiguration } = {
+  mode: 'development',
+  entry: {
+    index: './src/index.tsx',
+  },
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].bundle.js',
+    clean: true,
+    publicPath: '/',
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js', '.jsx'],
+    alias: {
+      '@arvin/ui-components': path.resolve(__dirname, '../ui-components/src'),
+    },
+    modules: [
+      'node_modules',
+      path.resolve(__dirname, '../ui-components/node_modules'),
+    ],
+  },
   module: {
     rules: [
       {
-        test: /\\.(tsx?|jsx?)$/,
+        test: /\.(tsx?|jsx?)$/,
         loader: 'ts-loader',
-        exclude: /node_modules/,
+        include: [
+          path.resolve(__dirname, 'src'),
+          path.resolve(__dirname, '../ui-components/src')
+        ],
+        options: {
+          configFile: path.resolve(__dirname, 'tsconfig.json'),
+          // 👇 关键：只转译，不进行类型检查 → 绕过 rootDir 限制
+          transpileOnly: true,
+          allowTsInNodeModules: true,
+        }
       },
       {
-        test: /\\.css$/,
+        test: /\.less$/,
+        use: ['style-loader', 'css-loader', 'less-loader'],
+      },
+      {
+        test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
       {
-        test: /\\.(less)$/,
-        use: ['style-loader', 'css-loader', 'less-loader'],
+        test: /\.md$/,
+        type: 'asset/source',
       },
     ],
   },
-  resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
-    alias: {
-      // 确保正确解析 monorepo 中的组件
-      'ui-components': path.resolve(__dirname, '../ui-components/src'),
-    },
-  },
-  output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist'),
-    clean: true,
-  },
   plugins: [
     new HtmlWebpackPlugin({
-      title: '表单预览',
-      templateContent: '<!DOCTYPE html><html><head><meta charset="utf-8"><title>表单预览</title></head><body><div id="root"></div></body></html>',
+      template: './public/index.html',
+      filename: 'index.html',
+      chunks: ['index'],
+    }),
+    new HtmlWebpackPlugin({
+      template: './public/umd.html',
+      filename: 'umd.html',
+      chunks: [],
+    }),
+    new HtmlWebpackPlugin({
+      template: './public/esm.html',
+      filename: 'esm.html',
+      chunks: [],
     }),
   ],
   devServer: {
-    static: './dist',
     port: 3000,
-    open: true,
+    hot: true,
+    open: '/umd.html',
+    static: [
+      {
+        directory: path.join(__dirname, 'public'),
+        publicPath: '/',
+      },
+      {
+        directory: path.join(__dirname, '../ui-components/dist'),
+        publicPath: '/dist',
+      }
+    ],
   },
 };
+
+export default config;

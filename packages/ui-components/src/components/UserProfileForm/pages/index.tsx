@@ -1,17 +1,27 @@
 import React from 'react';
 import { Form, Input, Button } from 'antd';
+import i18n from '../i18n';
 
-export default function createForm(runtime: any) {
-  const { Form, Input, Button } = runtime.antd;
-  
-  return ({ onSubmit }: { onSubmit: (values: any) => void }) => (
-    <Form onFinish={onSubmit}>
-      <Form.Item name="name" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item>
-        <Button type="primary" htmlType="submit">提交</Button>
-      </Form.Item>
-    </Form>
-  );
+interface UserProfileFormProps {
+  locale?: 'zh' | 'en';
 }
+
+const UserProfileForm: React.FC<UserProfileFormProps> = ({
+  locale = 'zh'
+}) => {
+  const t = i18n[locale];
+
+
+  return (
+    <>
+      <Form.Item label={t.name} name="name" rules={[{ required: true }]}>
+        <Input placeholder={`请输入${t.name}`} />
+      </Form.Item>
+      <Form.Item label={t.email} name="email" rules={[{ type: 'email' }]}>
+        <Input placeholder={`请输入${t.email}`} />
+      </Form.Item>
+    </>
+  );
+};
+
+export default UserProfileForm;

@@ -1,0 +1,2 @@
+/*! For license information please see index.js.LICENSE.txt */
+import*as r from"react";import"antd";var t={85(r,t,e){e(335)},335(r,t,e){var o=e(649);Symbol.for("react.element"),Symbol.for("react.fragment"),Object.prototype.hasOwnProperty,o.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner},649(t){t.exports=r}},e={};function o(r){var a=e[r];if(void 0!==a)return a.exports;var _=e[r]={exports:{}};return t[r](_,_.exports,o),_.exports}o(85),o(649);
